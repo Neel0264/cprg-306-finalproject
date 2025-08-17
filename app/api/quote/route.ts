@@ -1,4 +1,4 @@
-export const runtime = 'edge'; // helps avoid local TLS/proxy quirks
+export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
 
