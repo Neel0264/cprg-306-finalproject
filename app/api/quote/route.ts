@@ -1,6 +1,6 @@
 export const runtime = 'edge'; // helps avoid local TLS/proxy quirks
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const FALLBACKS = [
   { content: 'Stay hungry, stay foolish.', author: 'Steve Jobs' },
@@ -8,16 +8,19 @@ const FALLBACKS = [
   { content: 'You miss 100% of the shots you don’t take.', author: 'Wayne Gretzky' },
 ];
 
-export async function GET() {
+export async function GET(_req: NextRequest, _context: { params: Record<string, string> }) {
   try {
-    const r = await fetch('https://api.quotable.io/random', { cache: 'no-store' });
-    if (!r.ok) throw new Error(`Upstream status ${r.status}`);
-    const data = await r.json();
+    const res = await fetch('https://api.quotable.io/random', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Upstream status ${res.status}`);
+    const data = await res.json();
     return NextResponse.json({ content: data.content, author: data.author });
   } catch (err: unknown) {
-    console.error('Quote fetch failed:', err?.message || err);
-    const q = FALLBACKS[Math.floor(Math.random() * FALLBACKS.length)];
-    // Return a fallback so your UI still works
-    return NextResponse.json(q, { status: 200 });
+    if (err instanceof Error) {
+      console.error('Quote fetch failed:', err.message);
+    } else {
+      console.error('Quote fetch failed:', String(err));
+    }
+    const fallback = FALLBACKS[Math.floor(Math.random() * FALLBACKS.length)];
+    return NextResponse.json(fallback, { status: 200 });
   }
 }
