@@ -1,37 +1,56 @@
 'use client';
-
-import { useEffect, useState } from 'react';
-
-function applyTheme(theme: 'light' | 'dark') {
-  const root = document.documentElement; // <html>
-  root.classList.toggle('dark', theme === 'dark');
-  localStorage.setItem('theme', theme);
-}
+import { useState, useEffect } from 'react';
 
 export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    // Check for saved theme preference or default to 'light'
+    const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initial = saved ?? (prefersDark ? 'dark' : 'light');
-    applyTheme(initial);
-    setIsDark(initial === 'dark');
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDark(false);
+      document.documentElement.classList.remove('dark');
+    }
   }, []);
 
-  const toggle = () => {
-    const next = isDark ? 'light' : 'dark';
-    applyTheme(next);
-    setIsDark(!isDark);
+  const toggleTheme = () => {
+    const newTheme = !isDark;
+    setIsDark(newTheme);
+    
+    if (newTheme) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
   };
 
   return (
     <button
-      onClick={toggle}
-      className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-      aria-label="Toggle Light / Dark"
+      onClick={toggleTheme}
+      className={`
+        relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+        ${isDark ? 'bg-blue-600' : 'bg-gray-200'}
+      `}
+      role="switch"
+      aria-checked={isDark}
+      aria-label="Toggle dark mode"
     >
-      Toggle Light / Dark
+      <span
+        className={`
+          inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ease-in-out
+          ${isDark ? 'translate-x-6' : 'translate-x-1'}
+        `}
+      />
+      <span className="sr-only">
+        {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      </span>
     </button>
   );
 }
