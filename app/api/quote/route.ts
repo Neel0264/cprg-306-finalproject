@@ -8,7 +8,7 @@ const FALLBACKS = [
   { content: 'You miss 100% of the shots you don’t take.', author: 'Wayne Gretzky' },
 ];
 
-export async function GET(_req: NextRequest, _context: { params: Record<string, string> }) {
+export async function GET(_req: NextRequest) {
   try {
     const res = await fetch('https://api.quotable.io/random', { cache: 'no-store' });
     if (!res.ok) throw new Error(`Upstream status ${res.status}`);
