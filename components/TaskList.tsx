@@ -1,35 +1,41 @@
 'use client';
-import { useEffect, useState } from "react";
-import { getTasks } from "@/utils/storage";
-import { Task } from "@/types/task";
-import TaskItem from "./TaskItem";
+
+import { useCallback, useEffect, useState } from 'react';
+import { getTasks } from '@/utils/storage';
+import { Task } from '@/types/task';
+import TaskItem from './TaskItem';
 
 export default function TaskList() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
-  const loadTasks = () => {
+  const loadTasks = useCallback(() => {
     const loaded = getTasks();
+
     const sorted = loaded.sort((a, b) => {
       if (a.completed && !b.completed) return 1;
       if (!a.completed && b.completed) return -1;
+
       if (a.dueDate && b.dueDate) {
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
       }
+
       if (a.dueDate && !b.dueDate) return -1;
       if (!a.dueDate && b.dueDate) return 1;
+
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
+
     setTasks(sorted);
-  };
+  }, []);
 
   useEffect(() => {
     loadTasks();
-    window.addEventListener("task-updated", loadTasks);
-    return () => window.removeEventListener("task-updated", loadTasks);
-  }, []);
+    window.addEventListener('task-updated', loadTasks);
+    return () => window.removeEventListener('task-updated', loadTasks);
+  }, [loadTasks]);
 
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter((task) => {
     if (filter === 'active') return !task.completed;
     if (filter === 'completed') return task.completed;
     return true;
@@ -37,15 +43,17 @@ export default function TaskList() {
 
   const taskStats = {
     total: tasks.length,
-    completed: tasks.filter(t => t.completed).length,
-    active: tasks.filter(t => !t.completed).length
+    completed: tasks.filter((t) => t.completed).length,
+    active: tasks.filter((t) => !t.completed).length,
   };
 
   if (tasks.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400 text-lg">No tasks yet!</p>
-        <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Add your first study task above to get started.</p>
+        <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
+          Add your first study task above to get started.
+        </p>
       </div>
     );
   }

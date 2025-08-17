@@ -1,3 +1,4 @@
+'use client';
 import Header from "@/components/Header";
 import QuoteBox from "@/components/QuoteBox";
 import TaskInput from "@/components/TaskInput";

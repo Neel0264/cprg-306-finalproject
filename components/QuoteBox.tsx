@@ -1,65 +1,36 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+
+type Quote = {
+  content: string;
+  author: string;
+};
 
 export default function QuoteBox() {
-  const [quote, setQuote] = useState('');
-  const [author, setAuthor] = useState('');
+  const [quote, setQuote] = useState<Quote>({ content: '', author: '' });
   const [error, setError] = useState(false);
   const [showQuotes, setShowQuotes] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Offline quotes to use when API fails
-  const defaultQuotes = [
-    {
-      content: "Success is not final, failure is not fatal: it is the courage to continue that counts.",
-      author: "Winston Churchill"
-    },
-    {
-      content: "The only way to do great work is to love what you do.",
-      author: "Steve Jobs"
-    },
-    {
-      content: "Education is the most powerful weapon which you can use to change the world.",
-      author: "Nelson Mandela"
-    },
-    {
-      content: "The future belongs to those who believe in the beauty of their dreams.",
-      author: "Eleanor Roosevelt"
-    },
-    {
-      content: "It is during our darkest moments that we must focus to see the light.",
-      author: "Aristotle"
-    },
-    {
-      content: "Believe you can and you're halfway there.",
-      author: "Theodore Roosevelt"
-    },
-    {
-      content: "The only impossible journey is the one you never begin.",
-      author: "Tony Robbins"
-    },
-    {
-      content: "In the middle of difficulty lies opportunity.",
-      author: "Albert Einstein"
-    },
-    {
-      content: "Success is walking from failure to failure with no loss of enthusiasm.",
-      author: "Winston Churchill"
-    },
-    {
-      content: "Don't watch the clock; do what it does. Keep going.",
-      author: "Sam Levenson"
-    }
+  const defaultQuotes: Quote[] = [
+    { content: 'Success is not final, failure is not fatal: it is the courage to continue that counts.', author: 'Winston Churchill' },
+    { content: 'The only way to do great work is to love what you do.', author: 'Steve Jobs' },
+    { content: 'Education is the most powerful weapon which you can use to change the world.', author: 'Nelson Mandela' },
+    { content: 'The future belongs to those who believe in the beauty of their dreams.', author: 'Eleanor Roosevelt' },
+    { content: 'It is during our darkest moments that we must focus to see the light.', author: 'Aristotle' },
+    { content: 'Believe you can and you&rsquo;re halfway there.', author: 'Theodore Roosevelt' },
+    { content: 'The only impossible journey is the one you never begin.', author: 'Tony Robbins' },
+    { content: 'In the middle of difficulty lies opportunity.', author: 'Albert Einstein' },
+    { content: 'Success is walking from failure to failure with no loss of enthusiasm.', author: 'Winston Churchill' },
+    { content: 'Don&rsquo;t watch the clock; do what it does. Keep going.', author: 'Sam Levenson' },
   ];
 
-  // Get a random default quote
   const getRandomDefaultQuote = () => {
     const i = Math.floor(Math.random() * defaultQuotes.length);
     return defaultQuotes[i];
   };
 
-  // Fetch quote from API with fallback
-  const fetchQuote = async () => {
+  const fetchQuote = useCallback(async () => {
     setIsLoading(true);
     setError(false);
 
@@ -67,10 +38,9 @@ export default function QuoteBox() {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
 
-      // API fallback route (uses internal /api/quote route)
       const res = await fetch('/api/quote', {
         signal: controller.signal,
-        cache: 'no-store'
+        cache: 'no-store',
       });
 
       clearTimeout(timeout);
@@ -78,20 +48,17 @@ export default function QuoteBox() {
       if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
       const data = await res.json();
 
-      setQuote(data.content);
-      setAuthor(data.author);
+      setQuote({ content: data.content, author: data.author });
     } catch (err) {
       console.warn('Falling back to default quote:', err);
       const fallback = getRandomDefaultQuote();
-      setQuote(fallback.content);
-      setAuthor(fallback.author);
+      setQuote(fallback);
       setError(true);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  // Load on first mount
   useEffect(() => {
     const quotesEnabled = localStorage.getItem('showQuotes') !== 'false';
     setShowQuotes(quotesEnabled);
@@ -103,23 +70,21 @@ export default function QuoteBox() {
     const handleSettingsChange = () => {
       const enabled = localStorage.getItem('showQuotes') !== 'false';
       setShowQuotes(enabled);
-      if (enabled && !quote) {
+      if (enabled && !quote.content) {
         fetchQuote();
       }
     };
 
     window.addEventListener('quotes-setting-changed', handleSettingsChange);
     return () => window.removeEventListener('quotes-setting-changed', handleSettingsChange);
-  }, []);
+  }, [fetchQuote, quote.content]);
 
-  // Default init if quote is still missing
   useEffect(() => {
-    if (showQuotes && !quote && !isLoading) {
+    if (showQuotes && !quote.content && !isLoading) {
       const fallback = getRandomDefaultQuote();
-      setQuote(fallback.content);
-      setAuthor(fallback.author);
+      setQuote(fallback);
     }
-  }, [showQuotes, quote, isLoading]);
+  }, [showQuotes, quote.content, isLoading]);
 
   if (!showQuotes) return null;
 
@@ -129,11 +94,13 @@ export default function QuoteBox() {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
+                clipRule="evenodd"
+              />
             </svg>
-            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
-              Daily Motivation
-            </h3>
+            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">Daily Motivation</h3>
           </div>
 
           {isLoading ? (
@@ -143,11 +110,13 @@ export default function QuoteBox() {
             </div>
           ) : (
             <div>
-              <p className="text-blue-700 dark:text-blue-300 italic text-lg">"{quote}"</p>
-              <p className="text-blue-600 dark:text-blue-400 text-sm mt-2">— {author}</p>
+              <p className="text-blue-700 dark:text-blue-300 italic text-lg">
+                &ldquo;{quote.content}&rdquo;
+              </p>
+              <p className="text-blue-600 dark:text-blue-400 text-sm mt-2">— {quote.author}</p>
               {error && (
                 <p className="text-xs text-blue-500 dark:text-blue-400 mt-2">
-                  📱 Offline mode - Refresh to try again
+                  📱 Offline mode – Refresh to try again
                 </p>
               )}
             </div>
@@ -161,7 +130,12 @@ export default function QuoteBox() {
           title="Get new quote"
         >
           <svg className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
         </button>
       </div>

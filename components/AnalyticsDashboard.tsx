@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { calculateTaskAnalytics } from "@/utils/analytics";
 import { TaskAnalytics } from "@/types/analytics";
 
@@ -8,11 +8,11 @@ export default function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'trends' | 'insights'>('overview');
   const [lastUpdated, setLastUpdated] = useState<string>("");
 
-  const loadAnalytics = () => {
+  const loadAnalytics = useCallback(() => {
     setAnalytics(calculateTaskAnalytics());
     const now = new Date();
     setLastUpdated(now.toLocaleString());
-  };
+  }, []);
 
   useEffect(() => {
     loadAnalytics();
@@ -22,7 +22,7 @@ export default function AnalyticsDashboard() {
       window.removeEventListener("task-updated", loadAnalytics);
       window.removeEventListener("stats-updated", loadAnalytics);
     };
-  }, []);
+  }, [loadAnalytics]);
 
   if (!analytics) return null;
 
